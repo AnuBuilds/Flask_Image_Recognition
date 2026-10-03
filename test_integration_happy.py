@@ -19,3 +19,4 @@ def test_successful_prediction(client):
     # Assertions
     assert response.status_code == 200
     assert b"Prediction" in response.data  # Modify this check based on your output
+    assert b"File cannot be processed." not in response.data
