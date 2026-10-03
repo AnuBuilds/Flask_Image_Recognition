@@ -1,22 +1,27 @@
-# test_integration_happy.py
+"""Test a successful upload using a supplied image."""
 
-from io import BytesIO
-import pytest
+from pathlib import Path
+import re
+
 
 def test_successful_prediction(client):
-    """Test the successful image upload and prediction."""
-    # Create a mock image file with minimal valid content
-    img_data = BytesIO(b"fake_image_data")
-    img_data.name = "test.jpg"
-
-    # Simulate a file upload to the correct prediction endpoint
-    response = client.post(
-        "/prediction",  # Correct route for prediction
-        data={"file": (img_data, img_data.name)},
-        content_type="multipart/form-data"
+    """A valid image should produce a numeric prediction without an error."""
+    image_path = (
+        Path(__file__).parent
+        / "test_images"
+        / "2"
+        / "Sign 2 (97).jpeg"
     )
 
-    # Assertions
+    with image_path.open("rb") as image_file:
+        response = client.post(
+            "/prediction",
+            data={"file": (image_file, image_path.name)},
+            content_type="multipart/form-data",
+        )
+
     assert response.status_code == 200
-    assert b"Prediction" in response.data  # Modify this check based on your output
     assert b"File cannot be processed." not in response.data
+
+    html = response.get_data(as_text=True)
+    assert re.search(r"<h2\b[^>]*>\s*\d+\s*</h2>", html)
